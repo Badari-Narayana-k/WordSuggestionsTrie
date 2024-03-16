@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trie Application</title>
+    <style>
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        li {
+            float: left;
+        }
+
+        li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        li a:hover {
+            background-color: #111;
+        }
+
+        #input {
+            margin-top: 20px;
+        }
+
+        #output-dropdown {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Trie Application</h2>
+    <ul id="navbar">
+        <li><a href="#" onclick="selectOperation(1)">Insert Word</a></li>
+        <li><a href="#" onclick="selectOperation(2)">Insert Words from File</a></li>
+        <li><a href="#" onclick="selectOperation(3)">Search Word</a></li>
+        <li><a href="#" onclick="selectOperation(4)">Print All Words</a></li>
+        <li><a href="#" onclick="selectOperation(5)">Print Words with Prefix</a></li>
+        <li><a href="#" onclick="selectOperation(6)">Exit</a></li>
+    </ul>
+
+    <div id="input">
+        <label for="input-text">Enter text:</label><br>
+        <input type="text" id="input-text" name="input-text"><br>
+        <button onclick="selectOperation(1)">Insert</button>
+    </div>
+
+    <div id="output-dropdown"></div>
+
+    <input type="file" id="file-input" style="display: none">
+
+    <script>
+        class Tnode {
+            constructor() {
+                this.eow = false;
+                this.child = new Array(52);
+            }
+        }
+
+        class Trie {
+            constructor() {
+                this.root = new Tnode();
+            }
+
+            insert(word) {
+    // Check if word contains only alphabets
+    if (!/^[a-zA-Z]+$/.test(word)) {
+        alert("Error: Word must contain only alphabets.");
+        return;
+    }
+
+    let temp = this.root;
+    for (let i = 0; i < word.length; i++) {
+        let ch = word.charAt(i);
+        let id = ch.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+        if (id < 0 || id >= 26) {
+            console.error("Error: Invalid character detected.");
+            return;
+        }
+        if (temp.child[id] == null) {
+            let nn = new Tnode();
+            temp.child[id] = nn;
+        }
+        temp = temp.child[id];
+    }
+    temp.eow = true;
+}
+
+
+            search(word) {
+                let temp = this.root;
+                let fg = 0;
+                for (let i = 0; i < word.length; i++) {
+                    let ch = word.charAt(i);
+                    let id = ch.charCodeAt(0) - 'a'.charCodeAt(0);
+                    if (id < 0) {
+                        id = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 26;
+                    }
+                    if (temp.child[id] == null) {
+                        document.getElementById('output-dropdown').innerHTML = "<p>ERROR!!! The word doesn't exist</p>";
+                        fg = 1;
+                        break;
+                    }
+                    temp = temp.child[id];
+                }
+                if (fg == 0) {
+                    let outputHTML = temp.eow ? "<option>" + word + "</option>" : "<option>ERROR!!! The word doesn't exist</option>";
+                    document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+                }
+            }
+
+            printall() {
+                let ans = [];
+                let path = "";
+                this.h(this.root, path, ans);
+                let outputHTML = ans.map(word => "<option>" + word + "</option>").join('');
+                document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+            }
+
+            h(root, path, ans) {
+                if (root.eow) ans.push(path);
+                for (let i = 0; i < 52; i++) {
+                    if (root.child[i] != null) {
+                        if (i < 26)
+                            this.h(root.child[i], path + String.fromCharCode(i + 'a'.charCodeAt(0)), ans);
+                        else
+                            this.h(root.child[i], path + String.fromCharCode(i + 'A'.charCodeAt(0) - 26), ans);
+                    }
+                }
+            }
+
+            prefprin(prefix) {
+                let ans = [];
+                let path = prefix;
+                let temp = this.root;
+                let fg = 0;
+                for (let ch of prefix) {
+                    let idx = ch.charCodeAt(0) - 'a'.charCodeAt(0);
+                    if (idx < 0) {
+                        idx = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 26;
+                    }
+                    if (temp.child[idx] == null) {
+                        fg = 1;
+                        break;
+                    }
+                    temp = temp.child[idx];
+                }
+                if (fg == 0) {
+                    this.h(temp, path, ans);
+                    let outputHTML = ans.map(word => "<option>" + word + "</option>").join('');
+                    document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+                } else {
+                    document.getElementById('output-dropdown').innerHTML = "<option>The prefix is not available!!!</option>";
+                }
+            }
+        }
+
+        let t = new Trie();
+
+        function selectOperation(operation) {
+            switch (operation) {
+                case 1:
+                    let inputText = document.getElementById('input-text').value;
+                    if (inputText !== "") {
+                        t.insert(inputText);
+                        document.getElementById('input-text').value = ""; // Clear input field after insertion
+                    }
+                    break;
+                case 2:
+                    document.getElementById('file-input').click();
+                    break;
+                case 3:
+                    let searchWord = prompt("Enter a word to search:");
+                    if (searchWord !== null && searchWord !== "") {
+                        t.search(searchWord);
+                    }
+                    break;
+                case 4:
+                    t.printall();
+                    break;
+                case 5:
+                    let prefix = prompt("Enter a prefix to search:");
+                    if (prefix !== null && prefix !== "") {
+                        t.prefprin(prefix);
+                    }
+                    break;
+                case 6:
+                    alert("Exiting...");
+                    window.close();
+                    break;
+                default:
+                    alert("Invalid operation!");
+                    break;
+            }
+        }
+
+        // Handle file input change
+        document.getElementById('file-input').addEventListener('change', function() {
+    let file = this.files[0];
+    
+    // Check if the file is a text file
+    if (!file || !file.name.endsWith('.txt')) {
+        alert('Please select a .txt file.');
+        return;
+    }
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let words = e.target.result.split('\n');
+        words.forEach(word => {
+            if (word !== "") {
+                t.insert(word.trim()); // Remove leading/trailing whitespace
+            }
+        });
+    };
+    reader.readAsText(file);
+});
+    </script>
+</body>
+</html>

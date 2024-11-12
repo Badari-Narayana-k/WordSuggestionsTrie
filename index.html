@@ -5,37 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trie Application</title>
     <style>
-        ul {
-            list-style-type: none;
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
             margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #333;
+            padding: 20px;
+            overflow: hidden; /* Prevent scrollbars */
+            position: relative; /* For absolute positioning of leaves */
+            background: linear-gradient(to bottom, #e0f7fa, #80deea); /* Light blue gradient background */
+            background-size: cover; /* Ensure the background covers the entire page */
+            background-repeat: no-repeat; /* Prevent the background from repeating */
+            height: 100vh; /* Set the height to fill the viewport */
+        }
+
+        /* Navbar styles */
+        #navbar {
+            display: flex;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
+            backdrop-filter: blur(10px); /* Glass effect */
+            border-radius: 10px; /* Rounded corners */
+            padding: 10px 20px; /* Padding for the navbar */
+            margin-bottom: 20px; /* Space below the navbar */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
         }
 
         li {
-            float: left;
+            list-style-type: none; /* Remove bullet points */
+            margin: 0 15px; /* Space between items */
         }
 
         li a {
             display: block;
-            color: white;
+            color: #ffffff; /* White text color for better visibility */
             text-align: center;
-            padding: 14px 16px;
+            padding: 10px 15px;
             text-decoration: none;
+            border-radius: 5px; /* Rounded corners for links */
+            transition: background-color 0.3s, transform 0.3s; /* Smooth transition */
         }
 
         li a:hover {
-            background-color: #111;
+            background-color: rgba(255, 255, 255, 0.3); /* Light hover effect */
+            transform: scale(1.05); /* Slightly enlarge on hover */
         }
 
+        /* Input section styles */
         #input {
-            margin-top: 20px;
+            margin: 20px auto; /* Center the input section */
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
+            backdrop-filter: blur(10px); /* Glass effect */
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            width: 400px; /* Fixed width for the input section */
+            transition: transform 0.3s; /* Smooth transition for hover effect */
         }
 
-        #output-dropdown {
-            margin-top: 10px;
+        #input:hover {
+            transform: scale(1.02); /* Slightly enlarge on hover */
         }
+
+        #input label {
+            font-weight: bold;
+        }
+
+        #input input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #input button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #input button:hover {
+            background-color: #45a049;
+        }
+
+        /* Output dropdown styles */
+        #output-dropdown {
+            display: none; /* Initially hidden */
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
+            backdrop-filter: blur(10px); /* Glass effect */
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            width: 400px; /* Fixed width for the output dropdown */
+            transition: opacity 0.3s; /* Smooth transition for visibility */
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.8); /* Slightly opaque background for select */
+        }
+
+        /* Background for leaves */
+        .leaf {
+            position: absolute;
+            top: -10%;
+            opacity: 0.8;
+            pointer-events: none; /* Prevent interaction */
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        /* Add styles for the rest of your page */
+        h2 {
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        /* Modal styles */
+        #modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        #modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px; /* Could be more or less, depending on screen size */
+            border-radius: 10px; /* Rounded corners */
+        }
+
+        #close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #close-modal:hover,
+        #close-modal:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* ... existing styles ... */
     </style>
 </head>
 <body>
@@ -73,29 +212,28 @@
             }
 
             insert(word) {
-    // Check if word contains only alphabets
-    if (!/^[a-zA-Z]+$/.test(word)) {
-        alert("Error: Word must contain only alphabets.");
-        return;
-    }
+                // Check if word contains only alphabets
+                if (!/^[a-zA-Z]+$/.test(word)) {
+                    alert("Error: Word must contain only alphabets.");
+                    return;
+                }
 
-    let temp = this.root;
-    for (let i = 0; i < word.length; i++) {
-        let ch = word.charAt(i);
-        let id = ch.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
-        if (id < 0 || id >= 26) {
-            console.error("Error: Invalid character detected.");
-            return;
-        }
-        if (temp.child[id] == null) {
-            let nn = new Tnode();
-            temp.child[id] = nn;
-        }
-        temp = temp.child[id];
-    }
-    temp.eow = true;
-}
-
+                let temp = this.root;
+                for (let i = 0; i < word.length; i++) {
+                    let ch = word.charAt(i);
+                    let id = ch.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+                    if (id < 0 || id >= 26) {
+                        console.error("Error: Invalid character detected.");
+                        return;
+                    }
+                    if (temp.child[id] == null) {
+                        let nn = new Tnode();
+                        temp.child[id] = nn;
+                    }
+                    temp = temp.child[id];
+                }
+                temp.eow = true;
+            }
 
             search(word) {
                 let temp = this.root;
@@ -107,15 +245,16 @@
                         id = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 26;
                     }
                     if (temp.child[id] == null) {
-                        document.getElementById('output-dropdown').innerHTML = "<p>ERROR!!! The word doesn't exist</p>";
-                        fg = 1;
+                        fg = 1; // Word not found
                         break;
                     }
                     temp = temp.child[id];
                 }
-                if (fg == 0) {
+                if (fg === 0) {
                     let outputHTML = temp.eow ? "<option>" + word + "</option>" : "<option>ERROR!!! The word doesn't exist</option>";
-                    document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+                    showOutputDropdown("<select>" + outputHTML + "</select>");
+                } else {
+                    showOutputDropdown("<select><option>ERROR!!! The word doesn't exist</option></select>");
                 }
             }
 
@@ -123,8 +262,8 @@
                 let ans = [];
                 let path = "";
                 this.h(this.root, path, ans);
-                let outputHTML = ans.map(word => "<option>" + word + "</option>").join('');
-                document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+                let outputHTML = ans.length > 0 ? ans.map(word => "<option>" + word + "</option>").join('') : "<option>No words found</option>";
+                showOutputDropdown("<select>" + outputHTML + "</select>");
             }
 
             h(root, path, ans) {
@@ -150,48 +289,96 @@
                         idx = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 26;
                     }
                     if (temp.child[idx] == null) {
-                        fg = 1;
+                        fg = 1; // Prefix not found
                         break;
                     }
                     temp = temp.child[idx];
                 }
-                if (fg == 0) {
+                if (fg === 0) {
                     this.h(temp, path, ans);
-                    let outputHTML = ans.map(word => "<option>" + word + "</option>").join('');
-                    document.getElementById('output-dropdown').innerHTML = "<select>" + outputHTML + "</select>";
+                    let outputHTML = ans.length > 0 ? ans.map(word => "<option>" + word + "</option>").join('') : "<option>No words found with this prefix</option>";
+                    showOutputDropdown("<select>" + outputHTML + "</select>");
                 } else {
-                    document.getElementById('output-dropdown').innerHTML = "<option>The prefix is not available!!!</option>";
+                    showOutputDropdown("<select><option>The prefix is not available!!!</option></select>");
                 }
             }
         }
 
         let t = new Trie();
 
+        // Function to create leaves
+        function createLeaf() {
+            const leaf = document.createElement('img');
+            leaf.src = 'https://img.icons8.com/emoji/48/leaf-emoji.png'; // Valid leaf image URL
+            leaf.className = 'leaf';
+            leaf.style.left = Math.random() * 100 + 'vw'; // Random horizontal position
+            leaf.style.animationDuration = Math.random() * 3 + 2 + 's'; // Random fall duration
+            document.body.appendChild(leaf);
+
+            // Remove leaf after animation
+            leaf.addEventListener('animationend', () => {
+                leaf.remove();
+            });
+        }
+
+        // Show output dropdown based on operation
+        function showOutputDropdown(content) {
+            const outputDropdown = document.getElementById('output-dropdown');
+            outputDropdown.innerHTML = content; // Set the content
+            outputDropdown.style.display = 'block'; // Show the dropdown
+        }
+
+        function hideOutputDropdown() {
+            const outputDropdown = document.getElementById('output-dropdown');
+            outputDropdown.style.display = 'none'; // Hide the dropdown
+        }
+
+        function showModal(message) {
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function hideModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        document.getElementById('close-modal').onclick = hideModal;
+
         function selectOperation(operation) {
+            // Hide the input section for specific operations
+            const inputDiv = document.getElementById('input');
             switch (operation) {
                 case 1:
+                    inputDiv.style.display = 'block'; // Show input for insert
                     let inputText = document.getElementById('input-text').value;
                     if (inputText !== "") {
                         t.insert(inputText);
                         document.getElementById('input-text').value = ""; // Clear input field after insertion
+                        showModal("Successfully inserted!");
                     }
+                    hideOutputDropdown(); // Hide dropdown for insert operation
                     break;
                 case 2:
+                    inputDiv.style.display = 'block'; // Show input for insert from file
                     document.getElementById('file-input').click();
+                    hideOutputDropdown(); // Hide dropdown for file input
                     break;
                 case 3:
-                    let searchWord = prompt("Enter a word to search:");
-                    if (searchWord !== null && searchWord !== "") {
-                        t.search(searchWord);
-                    }
-                    break;
                 case 4:
-                    t.printall();
-                    break;
                 case 5:
-                    let prefix = prompt("Enter a prefix to search:");
-                    if (prefix !== null && prefix !== "") {
-                        t.prefprin(prefix);
+                    inputDiv.style.display = 'none'; // Hide input for search, print all, and print with prefix
+                    if (operation === 3) {
+                        let searchWord = prompt("Enter a word to search:");
+                        if (searchWord !== null && searchWord !== "") {
+                            t.search(searchWord);
+                        }
+                    } else if (operation === 4) {
+                        t.printall();
+                    } else if (operation === 5) {
+                        let prefix = prompt("Enter a prefix to search:");
+                        if (prefix !== null && prefix !== "") {
+                            t.prefprin(prefix);
+                        }
                     }
                     break;
                 case 6:
@@ -206,25 +393,29 @@
 
         // Handle file input change
         document.getElementById('file-input').addEventListener('change', function() {
-    let file = this.files[0];
-    
-    // Check if the file is a text file
-    if (!file || !file.name.endsWith('.txt')) {
-        alert('Please select a .txt file.');
-        return;
-    }
-
-    let reader = new FileReader();
-    reader.onload = function(e) {
-        let words = e.target.result.split('\n');
-        words.forEach(word => {
-            if (word !== "") {
-                t.insert(word.trim()); // Remove leading/trailing whitespace
+            let file = this.files[0];
+            
+            // Check if the file is a text file
+            if (!file || !file.name.endsWith('.txt')) {
+                alert('Please select a .txt file.');
+                return;
             }
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let words = e.target.result.split('\n');
+                words.forEach(word => {
+                    if (word !== "") {
+                        t.insert(word.trim()); // Remove leading/trailing whitespace
+                    }
+                });
+                showModal("Successfully inserted from file!");
+            };
+            reader.readAsText(file);
         });
-    };
-    reader.readAsText(file);
-});
+
+        // Generate leaves at intervals
+        setInterval(createLeaf, 500); // Adjust the interval for more or fewer leaves
     </script>
 </body>
 </html>
